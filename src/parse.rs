@@ -5,7 +5,9 @@ use crate::{ast::ast::AST, languages::Language};
 #[derive(Error, Debug)]
 pub enum ParseError {}
 
-pub fn parse<S: Into<String>>(_lang: Language, _content: S) -> Result<AST, ParseError> {
+pub type ParseResult = Result<AST, ParseError>;
+
+pub fn parse<S: Into<String>>(_lang: Language, _content: S) -> ParseResult {
     Ok(AST {
         expressions: vec![],
     })
@@ -17,8 +19,10 @@ mod tests {
 
     use super::*;
 
+    type TestResult = Result<(), ParseError>;
+
     #[test]
-    fn empty_content() -> Result<(), ParseError> {
+    fn empty_content() -> TestResult {
         let result = parse(Language::Typescript, "")?;
         assert_eq!(result.expressions.len(), 0);
 
@@ -26,7 +30,7 @@ mod tests {
     }
 
     #[test]
-    fn namespace_import() -> Result<(), ParseError> {
+    fn namespace_import() -> TestResult {
         let expected = ImportDeclaration {
             source: "developers".to_string(),
             specifiers: vec![ImportSpecifier::Namespace("daniel".to_string())],
