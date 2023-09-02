@@ -25,7 +25,7 @@ The goal of this project is to build a simplified tool similar to [jscodeshift](
 │                                             │
 │                                             │
 │                                ┌─────────────────────────┐
-│                                │ <You changing the AST>  │
+│                                │  You changing the AST   │
 │                                └─────────────────────────┘
 │                                             ▲
 │jsii-codeshift  ┌─────────────────┐          │
