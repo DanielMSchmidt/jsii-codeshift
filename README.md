@@ -18,7 +18,7 @@ The goal of this project is to build a simplified tool similar to [jscodeshift](
 
 ## Usage
 
-<code>
+```
    ┌───────────────────────────────────┐  jsii-codeshift
 ┌──│ TS / Python / Java / C# / Go Code │◀─────┐
 │  └───────────────────────────────────┘      │
@@ -31,4 +31,4 @@ The goal of this project is to build a simplified tool similar to [jscodeshift](
 │jsii-codeshift  ┌─────────────────┐          │
 └───────────────▶│ Simplified AST  │──────────┘
                  └─────────────────┘
-</code>
+```
