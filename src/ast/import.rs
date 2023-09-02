@@ -4,6 +4,7 @@ use std::fmt::{self, Debug, Display};
 #[derive(Debug, PartialEq)]
 pub enum ImportSpecifier {
     Namespace(String),
+    Default(String),
     Item { imported: String, local: String },
 }
 

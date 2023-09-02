@@ -94,4 +94,68 @@ Hello there
         let actual = assert_matches!(expr, Expression::ImportDeclaration(i) => i);
         assert_eq!(actual, expected);
     }
+
+    #[test]
+    fn default_import() {
+        let expected = ImportDeclaration {
+            source: "developers".to_string(),
+            specifiers: vec![ImportSpecifier::Default("peter".to_string())],
+        };
+        let (_, expr) = parse_import("import peter from \"developers\";").unwrap();
+
+        let actual = assert_matches!(expr, Expression::ImportDeclaration(i) => i);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn single_specific_import() {
+        let expected = ImportDeclaration {
+            source: "developers".to_string(),
+            specifiers: vec![ImportSpecifier::Item {
+                local: "thorsten".to_string(),
+                imported: "thorsten".to_string(),
+            }],
+        };
+        let (_, expr) = parse_import("import { thorsten } from \"developers\";").unwrap();
+
+        let actual = assert_matches!(expr, Expression::ImportDeclaration(i) => i);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn single_renamed_specific_import() {
+        let expected = ImportDeclaration {
+            source: "developers".to_string(),
+            specifiers: vec![ImportSpecifier::Item {
+                local: "sabine".to_string(),
+                imported: "thorsten".to_string(),
+            }],
+        };
+        let (_, expr) = parse_import("import { thorsten as sabine } from \"developers\";").unwrap();
+
+        let actual = assert_matches!(expr, Expression::ImportDeclaration(i) => i);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn multiple_renamed_specific_import() {
+        let expected = ImportDeclaration {
+            source: "developers".to_string(),
+            specifiers: vec![
+                ImportSpecifier::Item {
+                    local: "katrin".to_string(),
+                    imported: "katrin".to_string(),
+                },
+                ImportSpecifier::Item {
+                    local: "sabine".to_string(),
+                    imported: "thorsten".to_string(),
+                },
+            ],
+        };
+        let (_, expr) =
+            parse_import("import { katrin, thorsten as sabine } from \"developers\";").unwrap();
+
+        let actual = assert_matches!(expr, Expression::ImportDeclaration(i) => i);
+        assert_eq!(actual, expected);
+    }
 }
