@@ -13,12 +13,34 @@ pub fn parse<S: Into<String>>(_lang: Language, _content: S) -> Result<AST, Parse
 
 #[cfg(test)]
 mod tests {
+    use crate::ast::import::{ImportDeclaration, ImportSpecifier};
+
     use super::*;
 
     #[test]
     fn empty_content() -> Result<(), ParseError> {
         let result = parse(Language::Typescript, "")?;
         assert_eq!(result.expressions.len(), 0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn namespace_import() -> Result<(), ParseError> {
+        let expected = ImportDeclaration {
+            source: "developers".to_string(),
+            specifiers: vec![ImportSpecifier::Namespace("daniel".to_string())],
+        };
+        let result = parse(
+            Language::Typescript,
+            "import * as daniel from 'developers';",
+        )?;
+
+        assert_eq!(result.expressions.len(), 1);
+        assert_eq!(
+            format!("{}", result.expressions[0]),
+            format!("{}", expected)
+        );
 
         Ok(())
     }
