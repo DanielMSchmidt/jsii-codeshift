@@ -6,6 +6,7 @@ pub trait AstNode: Display + Debug {}
 
 #[derive(Debug)]
 pub enum Expression {
+    Comment(String),
     ImportDeclaration(ImportDeclaration),
     UnknownExpression(String),
 }

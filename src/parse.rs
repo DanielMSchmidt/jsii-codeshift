@@ -1,6 +1,7 @@
-use thiserror::Error;
+mod typescript;
 
 use crate::{ast::ast::AST, languages::Language};
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ParseError {}
