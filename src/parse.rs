@@ -29,24 +29,4 @@ mod tests {
 
         Ok(())
     }
-
-    #[test]
-    fn namespace_import() -> TestResult {
-        let expected = ImportDeclaration {
-            source: "developers".to_string(),
-            specifiers: vec![ImportSpecifier::Namespace("daniel".to_string())],
-        };
-        let result = parse(
-            Language::Typescript,
-            "import * as daniel from 'developers';",
-        )?;
-
-        assert_eq!(result.expressions.len(), 1);
-        assert_eq!(
-            format!("{}", result.expressions[0]),
-            format!("{}", expected)
-        );
-
-        Ok(())
-    }
 }

@@ -1,4 +1,5 @@
 use crate::ast::ast::Expression;
+use crate::ast::import::{ImportDeclaration, ImportSpecifier};
 use nom::branch::alt;
 // use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag, take_until};
@@ -22,6 +23,38 @@ pub fn parse_multi_line_comment(input: &str) -> IResult<&str, Expression, Verbos
 
 pub fn parse_comment(input: &str) -> IResult<&str, Expression, VerboseError<&str>> {
     alt((parse_single_line_comment, parse_multi_line_comment))(input)
+}
+
+// TODO: handle ' and backtick in source string
+pub fn parse_star_import(input: &str) -> IResult<&str, Expression, VerboseError<&str>> {
+    map(
+        tuple((
+            tag("import"),
+            take_until("*"),
+            tag("*"),
+            take_until("as"),
+            tag("as"),
+            take_until("from"),
+            tag("from"),
+            take_until("\""),
+            tag("\""),
+            take_until("\""),
+            tag("\""),
+            tag(";"),
+        )),
+        |x| {
+            let namespace: &str = x.5;
+            let source: &str = x.9;
+            Expression::ImportDeclaration(ImportDeclaration {
+                specifiers: vec![ImportSpecifier::Namespace(String::from(namespace.trim()))],
+                source: String::from(source.trim()),
+            })
+        },
+    )(input)
+}
+
+pub fn parse_import(input: &str) -> IResult<&str, Expression, VerboseError<&str>> {
+    alt((parse_star_import, parse_star_import))(input)
 }
 
 #[cfg(test)]
@@ -48,5 +81,17 @@ Hello there
         .unwrap();
         let s = assert_matches!(expr, Expression::Comment(s) => s);
         assert_eq!(s, "\nHello there\n");
+    }
+
+    #[test]
+    fn namespace_import() {
+        let expected = ImportDeclaration {
+            source: "developers".to_string(),
+            specifiers: vec![ImportSpecifier::Namespace("daniel".to_string())],
+        };
+        let (_, expr) = parse_import("import * as daniel from \"developers\";").unwrap();
+
+        let actual = assert_matches!(expr, Expression::ImportDeclaration(i) => i);
+        assert_eq!(actual, expected);
     }
 }

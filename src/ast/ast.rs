@@ -4,7 +4,7 @@ use super::import::ImportDeclaration;
 
 pub trait AstNode: Display + Debug {}
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Comment(String),
     ImportDeclaration(ImportDeclaration),
