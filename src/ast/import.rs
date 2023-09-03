@@ -1,7 +1,7 @@
-use super::ast::AstNode;
+use super::base::AstNode;
 use std::fmt::{self, Debug, Display};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ImportSpecifier {
     Namespace(String),
     Default(String),
@@ -14,7 +14,7 @@ impl Display for ImportSpecifier {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ImportDeclaration {
     pub source: String,
     // importKind (value vs type) omitted for now

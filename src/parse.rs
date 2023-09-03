@@ -1,6 +1,6 @@
 pub mod typescript;
 
-use crate::{ast::ast::AST, languages::Language};
+use crate::{ast::base::AST, languages::Language};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -16,7 +16,6 @@ pub fn parse<S: Into<String>>(_lang: Language, _content: S) -> ParseResult {
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::import::{ImportDeclaration, ImportSpecifier};
 
     use super::*;
 
