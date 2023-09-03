@@ -1,4 +1,4 @@
-mod typescript;
+pub mod typescript;
 
 use crate::{ast::ast::AST, languages::Language};
 use thiserror::Error;

@@ -3,8 +3,10 @@ use crate::ast::import::{ImportDeclaration, ImportSpecifier};
 use nom::branch::alt;
 // use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag, take_until};
-use nom::combinator::{map, value};
+use nom::character::complete::{alphanumeric1, space0};
+use nom::combinator::map;
 use nom::error::VerboseError;
+use nom::multi::separated_list1;
 use nom::sequence::{pair, tuple};
 use nom::IResult;
 
@@ -26,7 +28,7 @@ pub fn parse_comment(input: &str) -> IResult<&str, Expression, VerboseError<&str
 }
 
 // TODO: handle ' and backtick in source string
-pub fn parse_star_import(input: &str) -> IResult<&str, Expression, VerboseError<&str>> {
+fn parse_star_import(input: &str) -> IResult<&str, Expression, VerboseError<&str>> {
     map(
         tuple((
             tag("import"),
@@ -53,8 +55,101 @@ pub fn parse_star_import(input: &str) -> IResult<&str, Expression, VerboseError<
     )(input)
 }
 
+fn parse_default_import(input: &str) -> IResult<&str, Expression, VerboseError<&str>> {
+    map(
+        tuple((
+            tag("import"),
+            space0,
+            alphanumeric1,
+            space0,
+            tag("from"),
+            take_until("\""),
+            tag("\""),
+            take_until("\""),
+            tag("\""),
+            tag(";"),
+        )),
+        |x| {
+            let namespace: &str = x.2;
+            let source: &str = x.7;
+            Expression::ImportDeclaration(ImportDeclaration {
+                specifiers: vec![ImportSpecifier::Default(String::from(namespace.trim()))],
+                source: String::from(source.trim()),
+            })
+        },
+    )(input)
+}
+
+fn parse_import_specification(
+    input: &str,
+) -> IResult<&str, Vec<ImportSpecifier>, VerboseError<&str>> {
+    // Get rid of starting and ending {}, maybe ouside
+    // Sequence of foo / foo as bar
+    separated_list1(
+        tag(","),
+        alt(
+            (
+                map(
+                    tuple((
+                        space0,
+                        alphanumeric1,
+                        space0,
+                        tag("as"),
+                        space0,
+                        alphanumeric1,
+                        space0,
+                    )),
+                    |x| ImportSpecifier::Item {
+                        imported: String::from(x.1),
+                        local: String::from(x.5),
+                    },
+                ),
+                map(tuple((space0, alphanumeric1, space0)), |x| {
+                    ImportSpecifier::Item {
+                        imported: String::from(x.1),
+                        local: String::from(x.1),
+                    }
+                }),
+            ),
+            // tag(",")
+        ),
+    )(input)
+}
+
+fn parse_specific_import(input: &str) -> IResult<&str, Expression, VerboseError<&str>> {
+    map(
+        tuple((
+            tag("import"),
+            take_until("{"),
+            tag("{"),
+            take_until("}"),
+            tag("}"),
+            take_until("from"),
+            tag("from"),
+            take_until("\""),
+            tag("\""),
+            take_until("\""),
+            tag("\""),
+            tag(";"),
+        )),
+        |x| {
+            let import_specification: &str = x.3;
+            let source: &str = x.9;
+            let (_, specifiers) = parse_import_specification(import_specification).unwrap();
+            Expression::ImportDeclaration(ImportDeclaration {
+                specifiers,
+                source: String::from(source.trim()),
+            })
+        },
+    )(input)
+}
+
 pub fn parse_import(input: &str) -> IResult<&str, Expression, VerboseError<&str>> {
-    alt((parse_star_import, parse_star_import))(input)
+    alt((
+        parse_star_import,
+        parse_default_import,
+        parse_specific_import,
+    ))(input)
 }
 
 #[cfg(test)]
