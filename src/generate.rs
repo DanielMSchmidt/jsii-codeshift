@@ -2,18 +2,39 @@ pub mod typescript;
 
 use std::fmt::Display;
 
-use crate::{ast::base::AST, languages::Language};
+use crate::{
+    ast::base::{Expression, AST},
+    languages::Language,
+};
 use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum ExpressionGenerateError {
+    #[error("Unknown expression: {0}")]
+    UnknownExpression(Expression),
+}
 
 #[derive(Error, Debug)]
 pub enum GenerateError {
     UnsupportedLanguage,
+    CouldNotGenerateCodeForExpressions(Vec<ExpressionGenerateError>),
 }
 
 impl Display for GenerateError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             GenerateError::UnsupportedLanguage => write!(f, "Unsupported language"),
+            GenerateError::CouldNotGenerateCodeForExpressions(errors) => {
+                write!(
+                    f,
+                    "Could not generate code for expressions: {}",
+                    errors
+                        .iter()
+                        .map(|e| e.to_string())
+                        .collect::<Vec<String>>()
+                        .join(", ")
+                )
+            }
         }
     }
 }
