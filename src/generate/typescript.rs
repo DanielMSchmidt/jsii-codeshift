@@ -1,11 +1,60 @@
-use crate::ast::base::{Expression, AST};
+use crate::ast::{
+    base::{Expression, AST},
+    import::ImportDeclaration,
+};
 
 use super::{ExpressionGenerateError, GenerateError, GenerateResult};
 
 fn generate_code_for_expression(expr: Expression) -> Result<String, ExpressionGenerateError> {
     match expr {
         Expression::Comment(comment) => Ok(format!("// {}", comment)),
-        Expression::ImportDeclaration(_import_declaration) => todo!("implement imports"),
+        Expression::ImportDeclaration(ImportDeclaration { specifiers, source }) => {
+            let item_specifiers = specifiers
+                .iter()
+                .filter_map(|spec| match spec {
+                    crate::ast::import::ImportSpecifier::Item { imported, local } => {
+                        if imported == local {
+                            Some(format!("{}", imported))
+                        } else {
+                            Some(format!("{} as {}", imported, local))
+                        }
+                    }
+                    _ => None,
+                })
+                .collect::<Vec<String>>()
+                .join(", ");
+
+            let other_specifier_code = specifiers
+                .into_iter()
+                .filter_map(|spec| match spec {
+                    crate::ast::import::ImportSpecifier::Namespace(name) => {
+                        Some(format!("* as {}", name))
+                    }
+                    crate::ast::import::ImportSpecifier::Default(name) => Some(format!("{}", name)),
+                    _ => None, // we ignore these because we handle them above
+                })
+                .collect::<Vec<String>>()
+                .join(", ");
+
+            if item_specifiers.len() > 0 && other_specifier_code.len() > 0 {
+                return Ok(format!(
+                    "import {{ {} }}, {} from \"{}\"",
+                    item_specifiers, other_specifier_code, source
+                ));
+            }
+
+            if item_specifiers.len() > 0 {
+                return Ok(format!(
+                    "import {{ {} }} from \"{}\"",
+                    item_specifiers, source
+                ));
+            }
+
+            Ok(format!(
+                "import {} from \"{}\"",
+                other_specifier_code, source
+            ))
+        }
         Expression::UnknownExpression(unknown_expression) => Ok(unknown_expression),
     }
 }
@@ -115,7 +164,19 @@ mod tests {
             ],
         })?;
 
-        assert_eq!(result, "TODO: imports");
+        let lines = result.lines().collect::<Vec<&str>>();
+        assert_eq!(lines.len(), 5);
+        assert_eq!(lines[0], "import { foo } from \"./.gen/item-no-rename\"");
+        assert_eq!(
+            lines[1],
+            "import { baz as bar } from \"./.gen/item-with-rename\""
+        );
+        assert_eq!(lines[2], "import * as myLib from \"./.gen/namespace\"");
+        assert_eq!(lines[3], "import myLibsDefault from \"./.gen/default\"");
+        assert_eq!(
+            lines[4],
+            "import { foo, baz as bar }, * as myLib, myLibsDefault from \"./.gen/all-of-the-above\""
+        );
 
         Ok(())
     }
