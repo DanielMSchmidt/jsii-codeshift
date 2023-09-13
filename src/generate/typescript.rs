@@ -14,7 +14,7 @@ fn generate_code_for_expression(expr: Expression) -> Result<String, ExpressionGe
                 .filter_map(|spec| match spec {
                     crate::ast::import::ImportSpecifier::Item { imported, local } => {
                         if imported == local {
-                            Some(format!("{}", imported))
+                            Some(imported.clone())
                         } else {
                             Some(format!("{} as {}", imported, local))
                         }
@@ -30,20 +30,20 @@ fn generate_code_for_expression(expr: Expression) -> Result<String, ExpressionGe
                     crate::ast::import::ImportSpecifier::Namespace(name) => {
                         Some(format!("* as {}", name))
                     }
-                    crate::ast::import::ImportSpecifier::Default(name) => Some(format!("{}", name)),
+                    crate::ast::import::ImportSpecifier::Default(name) => Some(name.clone()),
                     _ => None, // we ignore these because we handle them above
                 })
                 .collect::<Vec<String>>()
                 .join(", ");
 
-            if item_specifiers.len() > 0 && other_specifier_code.len() > 0 {
+            if !item_specifiers.is_empty() && !other_specifier_code.is_empty() {
                 return Ok(format!(
                     "import {{ {} }}, {} from \"{}\"",
                     item_specifiers, other_specifier_code, source
                 ));
             }
 
-            if item_specifiers.len() > 0 {
+            if !item_specifiers.is_empty() {
                 return Ok(format!(
                     "import {{ {} }} from \"{}\"",
                     item_specifiers, source
@@ -65,7 +65,7 @@ pub fn generate(AST { expressions }: AST) -> GenerateResult {
         .map(|e| generate_code_for_expression(*e))
         .partition::<Vec<_>, _>(|c| c.is_ok());
 
-    if errors.len() > 0 {
+    if !errors.is_empty() {
         Err(GenerateError::CouldNotGenerateCodeForExpressions(
             errors.into_iter().map(Result::unwrap_err).collect(),
         ))
